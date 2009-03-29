@@ -1,0 +1,69 @@
+#!/bin/bash
+# rapidget - Downloadmanager for rapidshare downloads
+# Author: Alexander Surma <surma@drebesium.org> - released under GPL
+
+# Settings
+TMPDIR="$(mktemp -d /tmp/rapidget.XXX)"
+COOKIEFILE="~/.rapidget"
+unset FILE
+
+PATH="${PATH}:/usr/bin"
+VERSION="1.0"
+APPNAME=$(basename "${0}")
+
+version()
+{
+	echo "${APPNAME} v${VERSION}"
+}
+
+usage()
+{
+	version
+	echo "${APPNAMNE} [OPTIONS...] <LINK> [WGet OPTIONS]"
+	echo "  -f 		'LINK' is local file containing multiple URLs"
+	echo "  -c PATH 	use PATH as cookie file"
+	echo "  -u USERNAME	Login in with username (or prompt for it when empty)"
+	echo "  -p PASSWORD	Login in with password (or prompt for it when empty)"
+	echo "  -h 		This message"
+	echo "  -v		Print version end exit"
+	cleanup
+	exit 1
+}
+
+cleanup()
+{
+	[ -n "${TMPDIR}" -a -d  "${TMPDIR}" ] && rm -rf "${TMPDIR}"
+}
+
+sighandler()
+{
+	cleanup
+	exit 1
+}
+
+trap sighandler TERM INT
+
+while getopts ':vfhc:u:p' arg; do
+	case "${arg}" in
+		f) FILE='y' ;;
+		c) COOKIEFILE="${OPTARG}" ;;
+		u) if [ -z "${OPTARG}" ]; then
+	       		unset USERNAME
+			PROMPT_USERNAME='y'
+		   else
+		   	unset PROMPT_USERNAME
+	     		USERNAME="${OPTARG}"
+		   fi ;;
+		   p) if [ -z "${OPTARG}" ]; then
+	       		unset PASSWORD
+			PROMPT_PASSWORD='y'
+		   else
+		   	unset PROMPT_PASSWORD
+	     		PASSWORD="${OPTARG}"
+		   fi ;;
+		v) version
+		   cleanup
+		   exit 0 ;;
+		h|?) usage ;;
+	esac
+done
