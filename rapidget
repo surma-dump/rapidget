@@ -19,7 +19,7 @@ usage()
 {
 	version
 	echo "${APPNAMNE} [OPTIONS...] [wget OPTIONS]"
-	echo "  -c PATH 	use PATH as cookie file (default: ~/.rapidget"
+	echo "  -c PATH 	use PATH as cookie file (default: ~/.rapidget)"
 	echo "  -d		don't use cookies in file"
 	echo "  -u USERNAME	Login in with username (or prompt for it when empty)"
 	echo "  -p PASSWORD	Login in with password (or prompt for it when empty)"
