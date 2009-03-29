@@ -31,7 +31,7 @@ usage()
 cleanup()
 {
 	[ -n "${TMPDIR}" -a -d  "${TMPDIR}" ] && rm -rf "${TMPDIR}"
-	stty echo
+	stty echo > /dev/null
 }
 
 sighandler()
@@ -81,8 +81,10 @@ if [ -n "${PROMPT_PASSWORD}" ] ; then
 	echo ""
 fi
 if [ ! -r "${COOKIEFILE}" -o -n "${PROMPT_PASSWORD}" -o -n "${PROMPT_PASSWORD}" ]; then
+	echo "Logging in..."
 	wget -O /dev/null --post-data "username=${USERNAME}&password=${PASSWORD}" --save-cookies "${COOKIEFILE}" $LOGINURL	
 fi
+echo "Starting download..."
 while read LINE; do
 	wget --load-cookies $@ "${COOKIEFILE}" "${LINE}"
 done
