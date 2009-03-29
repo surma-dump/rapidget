@@ -19,7 +19,7 @@ version()
 usage()
 {
 	version
-	echo "${APPNAMNE} [OPTIONS...] <LINK> [WGet OPTIONS]"
+	echo "${APPNAMNE} [OPTIONS...] <LINK> -- [WGet OPTIONS]"
 	echo "  -f 		'LINK' is local file containing multiple URLs"
 	echo "  -c PATH 	use PATH as cookie file"
 	echo "  -u USERNAME	Login in with username (or prompt for it when empty)"
@@ -67,3 +67,4 @@ while getopts ':vfhc:u:p' arg; do
 		h|?) usage ;;
 	esac
 done
+shift $((${OPTIND} - 1))
