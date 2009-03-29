@@ -20,6 +20,7 @@ usage()
 	version
 	echo "${APPNAMNE} [OPTIONS...] [wget OPTIONS]"
 	echo "  -c PATH 	use PATH as cookie file (default: ~/.rapidget"
+	echo "  -d		don't use cookies in file"
 	echo "  -u USERNAME	Login in with username (or prompt for it when empty)"
 	echo "  -p PASSWORD	Login in with password (or prompt for it when empty)"
 	echo "  -h 		This message"
@@ -31,7 +32,7 @@ usage()
 cleanup()
 {
 	[ -n "${TMPDIR}" -a -d  "${TMPDIR}" ] && rm -rf "${TMPDIR}"
-	stty echo > /dev/null
+	stty echo &> /dev/null
 }
 
 sighandler()
@@ -42,19 +43,24 @@ sighandler()
 
 trap sighandler TERM INT
 
-while getopts ':vfhc:u:p:' arg; do
+while getopts ':vfhc:u:p:d' arg; do
 	case "${arg}" in
 		c) COOKIEFILE="${OPTARG}" ;;
-		u) if [ -z "${OPTARG}" ]; then
+		d) PROMPT_USERNAME="y" && PROMPT_PASSWORD="y" ;;
+		u) REAUTH="y"
+		   [ -z "${PASSWORD}" ] && PROMPT_PASSWORD="y"
+		   if [ -z "${OPTARG}" ]; then
 	       		unset USERNAME
-			PROMPT_USERNAME='y'
+			PROMPT_USERNAME="y"
 		   else
 		   	unset PROMPT_USERNAME
 	     		USERNAME="${OPTARG}"
 		   fi ;;
-		   p) if [ -z "${OPTARG}" ]; then
+	   	p) REAUTH="y"
+		   [ -z "${USERNAME}" ] && PROMPT_USERNAME="y"
+		   if [ -z "${OPTARG}" ]; then
 	       		unset PASSWORD
-			PROMPT_PASSWORD='y'
+			PROMPT_PASSWORD="y"
 		   else
 		   	unset PROMPT_PASSWORD
 	     		PASSWORD="${OPTARG}"
@@ -80,9 +86,9 @@ if [ -n "${PROMPT_PASSWORD}" ] ; then
 	stty echo
 	echo ""
 fi
-if [ ! -r "${COOKIEFILE}" -o -n "${PROMPT_PASSWORD}" -o -n "${PROMPT_PASSWORD}" ]; then
+if [ -n "${REAUTH}" ]; then
 	echo "Logging in..."
-	wget -O /dev/null --post-data "username=${USERNAME}&password=${PASSWORD}" --save-cookies "${COOKIEFILE}" $LOGINURL	
+	wget -O - --post-data "login=${USERNAME}&password=${PASSWORD}" --save-cookies "${COOKIEFILE}" "${LOGINURL}" &> /dev/null
 fi
 echo "Starting download..."
 while read LINE; do
