@@ -18,8 +18,8 @@ version()
 usage()
 {
 	version
-	echo "${APPNAMNE} [OPTIONS...] -- [WGet OPTIONS]"
-	echo "  -c PATH 	use PATH as cookie file"
+	echo "${APPNAMNE} [OPTIONS...] [wget OPTIONS]"
+	echo "  -c PATH 	use PATH as cookie file (default: ~/.rapidget"
 	echo "  -u USERNAME	Login in with username (or prompt for it when empty)"
 	echo "  -p PASSWORD	Login in with password (or prompt for it when empty)"
 	echo "  -h 		This message"
@@ -31,6 +31,7 @@ usage()
 cleanup()
 {
 	[ -n "${TMPDIR}" -a -d  "${TMPDIR}" ] && rm -rf "${TMPDIR}"
+	stty echo
 }
 
 sighandler()
@@ -65,4 +66,19 @@ while getopts ':vfhc:u:p' arg; do
 		*)
 	esac
 done
+
 shift $((${OPTIND} - 1))
+[ ! -r "${COOKIEFILE}" -a -z "${PROMPT_USERNAME}" -a -z "${USERNAME}" ] && PROMPT_USERNAME="y"
+[ ! -r "${COOKIEFILE}" -a -z "${PROMPT_PASSWORD}" -a -z "${PASSWORD}" ] && PROMPT_PASSWORD="y"
+if [ -n "${PROMPT_USERNAME}" ] ; then
+	echo -n "Username: "
+	read USERNAME
+fi
+if [ -n "${PROMPT_PASSWORD}" ] ; then
+	echo -n "Password: "
+	stty -echo
+	read PASSWORD
+	stty echo
+	echo ""
+fi
+echo "Logging in with '${USERNAME}' '${PASSWORD}'"
