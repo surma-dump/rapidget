@@ -53,9 +53,9 @@ login()
 	echo "Logging in..."
 	NUM=$(wget -O - --post-data="login=${DATA[0]}&password=${DATA[1]}" \
 		--save-cookies="${COOKIEFILE}" "${LOGINURL}" 2>/dev/null  \
-		| grep -Ei '(incorrect|not been found|type="password")' \
+		| grep -i 'Settings' \
 		| wc -l)
-	[ "${NUM}" -gt 0 ] && error "Login incorrect"
+	[ "${NUM}" -le 0 ] && error "Login incorrect"
 }
 
 trap mkill INT TERM
@@ -64,7 +64,7 @@ while getopts ":vhc:u:f" arg; do
 	case "${arg}" in
 		f) FILE="y" ;;
 		c) COOKIEFILE="${OPTARG}" ;;
-		u) DATA=($(echo ${OPTARG} | sed 's/([^\\]):/$1 /')) ; REAUTH="y" ;;
+		u) DATA=($(echo ${OPTARG} | sed 's/:/ /')) ; REAUTH="y" ;;
 		v) version ; mkill 0 ;;
 		h) usage 0 ;;
 		:) error "${OPTARG} requires an argument" ;;
@@ -76,11 +76,14 @@ URL="${1}"
 shift
 [ -z "${URL}" ] && usage 1
 
-cleanup
 [ -n "${REAUTH}" ] && login
 if [ -z "${FILE}" ]; then
-	ACTFILE="${URL}"
+	ACTFILE=$(basename "${URL}")
 	wget $@ --load-cookies="${COOKIEFILE}" "${URL}"
 else
-	true
+	cat "${URL}" | while read LINE; do
+		ACTFILE=$(basename "${LINE}")
+		wget $@ --load-cookies="${COOKIEFILE}" "${LINE}"
+	done
 fi
+cleanup
