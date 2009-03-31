@@ -9,6 +9,7 @@ LOGINURL="https://ssl.rapidshare.com/cgi-bin/premiumzone.cgi"
 REAUTH=""
 FILE=""
 ACTFILE=""
+URL=""
 APPNAME=$(basename "${0}")
 VERSION=2.0
 
@@ -70,5 +71,15 @@ while getopts ":vhc:u:f" arg; do
 		?) usage 1 ;;
 	esac
 done
+shift $((${OPTIND} - 1))
+URL="${1}"
+shift
+
 cleanup
 [ -n "${REAUTH}" ] && login
+if [ -z "${FILE}" ]; then
+	ACTFILE="${URL}"
+	wget $@ --load-cookies="${COOKIEFILE}" "${URL}"
+else
+	true
+fi
