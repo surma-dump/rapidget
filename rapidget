@@ -51,9 +51,9 @@ error()
 login()
 {
 	echo "Logging in..."
-	NUM=$(wget -O - --post-data="login=${DATA[0]}&password=${DATA[1]}" \
+	NUM=$(wget -O - --post-data="login=${DATA[1]}&password=${DATA[2]}" \
 		--save-cookies="${COOKIEFILE}" "${LOGINURL}" 2>/dev/null  \
-		| grep -Ei '(incorrect|not been found)' \
+		| grep -Ei '(incorrect|not been found|type="password")' \
 		| wc -l)
 	[ "${NUM}" -gt 0 ] && error "Login incorrect"
 }
@@ -74,12 +74,13 @@ done
 shift $((${OPTIND} - 1))
 URL="${1}"
 shift
+[ -z "${URL}" ] && usage 1
 
 cleanup
 [ -n "${REAUTH}" ] && login
 if [ -z "${FILE}" ]; then
 	ACTFILE="${URL}"
-	wget $@ --load-cookies="${COOKIEFILE}" "${URL}"
+	echo wget $@ --load-cookies="${COOKIEFILE}" "${URL}"
 else
 	true
 fi
