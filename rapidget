@@ -3,11 +3,12 @@
 # Author: Alexander Surma <surma@drebesium.org> - released under GPL
 
 # Settings
-TEMPDIR=$(mktemp -d rapidget.XXX)
 COOKIEFILE="${HOME}/.rapidget"
+LOGINURL="https://ssl.rapidshare.com/cgi-bin/premiumzone.cgi"
 
-REAUTH="n"
-FILE="n"
+REAUTH=""
+FILE=""
+ACTFILE=""
 APPNAME=$(basename "${0}")
 VERSION=2.0
 
@@ -23,6 +24,7 @@ usage()
 	echo "Options:"
 	echo "  -f		URL is a file containing a list of URLs rather than a single URL"
 	echo "  -c PATH 	User this file instead of the default file for cookies (i.e. ~/.rapidget)"
+	echo "  -u USER:PASS	Login using this data and save cookie to file"
 	echo "  -v		Print version"
 	echo "  -h		This message"
 	mkill $@
@@ -30,7 +32,7 @@ usage()
 
 cleanup()
 {
-	[ -d "${TEMPDIR}" ] && rm -rf "${TEMPDIR}"
+	[ -n "${ACTFILE}" ] && rm -rf "${ACTFILE}"
 }
 
 mkill()
@@ -45,12 +47,21 @@ error()
 	mkill ${2} 
 }
 
+login()
+{
+	NUM=$(wget -O - --post-data="login=${DATA[0]}&password=${DATA[1]}" \
+		--save-cookies="${COOKIEFILE}" "${LOGINURL}" | grep incorrect \
+		| wc -l)
+	[ "${NUM}" -gt 0 ] && error "Login incorrect"
+}
+
 trap mkill INT TERM
 
-while getopts ":vhc:f" arg; do
+while getopts ":vhc:u:f" arg; do
 	case "${arg}" in
 		f) FILE="y" ;;
 		c) COOKIEFILE="${OPTARG}" ;;
+		u) DATA=($(echo ${OPTARG} | sed 's/[^\\]:/ /')) ; REAUTH="y" ;;
 		v) version ; mkill 0 ;;
 		h) usage 0 ;;
 		:) error "${OPTARG} requires an argument" ;;
@@ -58,3 +69,4 @@ while getopts ":vhc:f" arg; do
 	esac
 done
 cleanup
+[ -n "${REAUTH}" ] && login
