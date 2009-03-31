@@ -82,6 +82,7 @@ if [ -z "${FILE}" ]; then
 	wget -O "${ACTFILE}" $@ --load-cookies="${COOKIEFILE}" "${URL}"
 else
 	cat "${URL}" | while read LINE; do
+		trap mkill INT TERM
 		ACTFILE=$(basename "${LINE}")
 		wget -O "${ACTFILE}" $@ --load-cookies="${COOKIEFILE}" "${LINE}" 
 	done
