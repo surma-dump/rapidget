@@ -33,7 +33,8 @@ usage()
 
 cleanup()
 {
-	[ -n "${ACTFILE}" ] && rm -rf "${ACTFILE}"
+	echo "DA: ${ACTFILE}"
+	[ -n "${ACTFILE}" ] && rm "${ACTFILE}"
 }
 
 mkill()
@@ -79,11 +80,11 @@ shift
 [ -n "${REAUTH}" ] && login
 if [ -z "${FILE}" ]; then
 	ACTFILE=$(basename "${URL}")
-	wget $@ --load-cookies="${COOKIEFILE}" "${URL}"
+	wget -O "${ACTFILE}" $@ --load-cookies="${COOKIEFILE}" "${URL}"
 else
 	cat "${URL}" | while read LINE; do
 		ACTFILE=$(basename "${LINE}")
-		wget $@ --load-cookies="${COOKIEFILE}" "${LINE}"
+		wget -O "${ACTFILE}" $@ --load-cookies="${COOKIEFILE}" "${LINE}" 
 	done
 fi
 cleanup
