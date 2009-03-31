@@ -33,8 +33,7 @@ usage()
 
 cleanup()
 {
-	echo "DA: ${ACTFILE}"
-	[ -n "${ACTFILE}" ] && rm "${ACTFILE}"
+	[ -n "${ACTFILE}" ] && rm -rf "${ACTFILE}"
 }
 
 mkill()
