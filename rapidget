@@ -1,15 +1,16 @@
 #!/bin/bash
-# rapidget - Downloadmanager for rapidshare downloads
+# rapidget - Downloadmanager for rapidshare
 # Author: Alexander Surma <surma@drebesium.org> - released under GPL
 
 # Settings
-TMPDIR="$(mktemp -d /tmp/rapidget.XXX)"
-COOKIEFILE="$HOME/.rapidget"
+TEMPDIR=$(mktemp -d rapidget.XXX)
+COOKIEFILE="${HOME}/.rapidget"
 
-PATH="${PATH}:/usr/bin"
-VERSION="1.0"
+REAUTH="n"
+FILE="n"
 APPNAME=$(basename "${0}")
-LOGINURL="https://ssl.rapidshare.com/cgi-bin/premiumzone.cgi"
+VERSION=2.0
+
 version()
 {
 	echo "${APPNAME} v${VERSION}"
@@ -18,79 +19,42 @@ version()
 usage()
 {
 	version
-	echo "${APPNAMNE} [OPTIONS...] [wget OPTIONS]"
-	echo "  -c PATH 	use PATH as cookie file (default: ~/.rapidget)"
-	echo "  -d		don't use cookies in file"
-	echo "  -u USERNAME	Login in with username (or prompt for it when empty)"
-	echo "  -p PASSWORD	Login in with password (or prompt for it when empty)"
-	echo "  -h 		This message"
-	echo "  -v		Print version end exit"
-	cleanup
-	exit 1
+	echo " [OPTIONS] <URL> [wget OPTIONS]"
+	echo "Options:"
+	echo "  -f		URL is a file containing a list of URLs rather than a single URL"
+	echo "  -c PATH 	User this file instead of the default file for cookies (i.e. ~/.rapidget)"
+	echo "  -v		Print version"
+	echo "  -h		This message"
+	mkill $@
 }
 
 cleanup()
 {
-	[ -n "${TMPDIR}" -a -d  "${TMPDIR}" ] && rm -rf "${TMPDIR}"
-	stty echo &> /dev/null
+	[ -d "${TEMPDIR}" ] && rm -rf "${TEMPDIR}"
 }
 
-sighandler()
+mkill()
 {
 	cleanup
-	exit 1
+	exit ${1-1}
 }
 
-trap sighandler TERM INT
+error()
+{
+	echo "${APPNAME}: ${1}" >&2
+	mkill ${2} 
+}
 
-while getopts ':vfhc:u:p:d' arg; do
+trap mkill INT TERM
+
+while getopts ":vhc:f" arg; do
 	case "${arg}" in
+		f) FILE="y" ;;
 		c) COOKIEFILE="${OPTARG}" ;;
-		d) PROMPT_USERNAME="y" && PROMPT_PASSWORD="y" ;;
-		u) REAUTH="y"
-		   [ -z "${PASSWORD}" ] && PROMPT_PASSWORD="y"
-		   if [ -z "${OPTARG}" ]; then
-	       		unset USERNAME
-			PROMPT_USERNAME="y"
-		   else
-		   	unset PROMPT_USERNAME
-	     		USERNAME="${OPTARG}"
-		   fi ;;
-	   	p) REAUTH="y"
-		   [ -z "${USERNAME}" ] && PROMPT_USERNAME="y"
-		   if [ -z "${OPTARG}" ]; then
-	       		unset PASSWORD
-			PROMPT_PASSWORD="y"
-		   else
-		   	unset PROMPT_PASSWORD
-	     		PASSWORD="${OPTARG}"
-		   fi ;;
-		v) version
-		   cleanup
-		   exit 0 ;;
-		h|?) usage ;;
-		*)
+		v) version ; mkill 0 ;;
+		h) usage 0 ;;
+		:) error "${OPTARG} requires an argument" ;;
+		?) usage 1 ;;
 	esac
 done
-shift $((${OPTIND} - 1))
-[ ! -r "${COOKIEFILE}" -a -z "${PROMPT_USERNAME}" -a -z "${USERNAME}" ] && PROMPT_USERNAME="y"
-[ ! -r "${COOKIEFILE}" -a -z "${PROMPT_PASSWORD}" -a -z "${PASSWORD}" ] && PROMPT_PASSWORD="y"
-if [ -n "${PROMPT_USERNAME}" ] ; then
-	echo -n "Username: "
-	read USERNAME
-fi
-if [ -n "${PROMPT_PASSWORD}" ] ; then
-	echo -n "Password: "
-	stty -echo
-	read PASSWORD
-	stty echo
-	echo ""
-fi
-if [ -n "${REAUTH}" ]; then
-	echo "Logging in..."
-	wget -O - --post-data "login=${USERNAME}&password=${PASSWORD}" --save-cookies "${COOKIEFILE}" "${LOGINURL}" &> /dev/null
-fi
-echo "Starting download..."
-while read LINE; do
-	wget --load-cookies $@ "${COOKIEFILE}" "${LINE}"
-done
+cleanup
