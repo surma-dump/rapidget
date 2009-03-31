@@ -49,8 +49,10 @@ error()
 
 login()
 {
+	echo "Logging in..."
 	NUM=$(wget -O - --post-data="login=${DATA[0]}&password=${DATA[1]}" \
-		--save-cookies="${COOKIEFILE}" "${LOGINURL}" | grep incorrect \
+		--save-cookies="${COOKIEFILE}" "${LOGINURL}" 2>/dev/null  \
+		| grep -Ei '(incorrect|not been found)' \
 		| wc -l)
 	[ "${NUM}" -gt 0 ] && error "Login incorrect"
 }
@@ -61,7 +63,7 @@ while getopts ":vhc:u:f" arg; do
 	case "${arg}" in
 		f) FILE="y" ;;
 		c) COOKIEFILE="${OPTARG}" ;;
-		u) DATA=($(echo ${OPTARG} | sed 's/[^\\]:/ /')) ; REAUTH="y" ;;
+		u) DATA=($(echo ${OPTARG} | sed 's/([^\\]):/$1 /')) ; REAUTH="y" ;;
 		v) version ; mkill 0 ;;
 		h) usage 0 ;;
 		:) error "${OPTARG} requires an argument" ;;
