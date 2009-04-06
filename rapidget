@@ -62,9 +62,10 @@ login()
 dlfile()
 {
 	trap mkill INT TERM
-	ACTFILE=$(basename "${1}")
+	ACTURL="${1}"
 	shift
-	wget -O "${ACTFILE}" $@ --load-cookies="${COOKIEFILE}" "${1}" 
+	ACTFILE=$(basename "${ACTURL}")
+	wget -O "${ACTFILE}" $@ --load-cookies="${COOKIEFILE}" "${ACTURL}" 
 
 }
 
