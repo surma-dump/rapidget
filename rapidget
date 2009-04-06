@@ -11,7 +11,7 @@ FILE=""
 ACTFILE=""
 URL=""
 APPNAME=$(basename "${0}")
-VERSION=2.1
+VERSION=2.1.1
 
 version()
 {
@@ -21,9 +21,10 @@ version()
 usage()
 {
 	version
-	echo " [OPTIONS] <URL> [wget OPTIONS]"
+	echo " [OPTIONS] [wget OPTIONS]"
 	echo "Options:"
-	echo "  -f		URL is a file containing a list of URLs rather than a single URL (- for stdin)"
+	echo "  -f FILE		Read URLS from FILE"
+	echo "  -d URL		Load a single URL"
 	echo "  -c PATH 	User this file instead of the default file for cookies (i.e. ~/.rapidget)"
 	echo "  -u USER:PASS	Login using this data and save cookie to file"
 	echo "  -v		Print version"
@@ -61,16 +62,19 @@ login()
 dlfile()
 {
 	trap mkill INT TERM
-	ACTFILE=$(basename "${1}")
-	wget -O "${ACTFILE}" $@ --load-cookies="${COOKIEFILE}" "${1}" 
+	ACTURL="${1}"
+	shift
+	ACTFILE=$(basename "${ACTURL}")
+	wget -O "${ACTFILE}" $@ --load-cookies="${COOKIEFILE}" "${ACTURL}" 
 
 }
 
 trap mkill INT TERM
 
-while getopts ":vhc:u:f" arg; do
+while getopts ":vhc:u:f:d:" arg; do
 	case "${arg}" in
-		f) FILE="y" ;;
+		f) FILE="${OPTARG}" ;;
+		d) URL="${OPTARG}" ;;
 		c) COOKIEFILE="${OPTARG}" ;;
 		u) DATA=($(echo ${OPTARG} | sed 's/:/ /')) ; REAUTH="y" ;;
 		v) version ; mkill 0 ;;
@@ -80,22 +84,20 @@ while getopts ":vhc:u:f" arg; do
 	esac
 done
 shift $((${OPTIND} - 1))
-URL="${1}"
 shift
-[ -z "${URL}" ] && usage 1
 
 [ -n "${REAUTH}" ] && login
-if [ -z "${FILE}" ]; then
+if [ -n "${URL}" ]; then
 	ACTFILE=$(basename "${URL}")
 	wget -O "${ACTFILE}" $@ --load-cookies="${COOKIEFILE}" "${URL}"
 else
-	if [ "${URL}" = '-' ]; then
+	if [ -z "${FILE}" ]; then
 		while read LINE; do
-			dlfile "${LINE}";
+			dlfile "${LINE}" $@
 		done
 	else
-		cat "${URL}" | while read LINE; do
-			dlfile "${LINE}"
+		cat "${FILE}" | while read LINE; do
+			dlfile "${LINE}" $@
 		done
 	fi
 fi
