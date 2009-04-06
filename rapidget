@@ -63,6 +63,7 @@ dlfile()
 {
 	trap mkill INT TERM
 	ACTFILE=$(basename "${1}")
+	shift
 	wget -O "${ACTFILE}" $@ --load-cookies="${COOKIEFILE}" "${1}" 
 
 }
@@ -83,7 +84,6 @@ while getopts ":vhc:u:f:d:" arg; do
 done
 shift $((${OPTIND} - 1))
 shift
-[ -z "${URL}" ] && usage 1
 
 [ -n "${REAUTH}" ] && login
 if [ -n "${URL}" ]; then
@@ -92,11 +92,11 @@ if [ -n "${URL}" ]; then
 else
 	if [ -z "${FILE}" ]; then
 		while read LINE; do
-			dlfile "${LINE}";
+			dlfile "${LINE}" $@
 		done
 	else
 		cat "${FILE}" | while read LINE; do
-			dlfile "${LINE}"
+			dlfile "${LINE}" $@
 		done
 	fi
 fi
