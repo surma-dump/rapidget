@@ -11,7 +11,7 @@ FILE=""
 ACTFILE=""
 URL=""
 APPNAME=$(basename "${0}")
-VERSION=2.0
+VERSION=2.1
 
 version()
 {
@@ -23,7 +23,7 @@ usage()
 	version
 	echo " [OPTIONS] <URL> [wget OPTIONS]"
 	echo "Options:"
-	echo "  -f		URL is a file containing a list of URLs rather than a single URL"
+	echo "  -f		URL is a file containing a list of URLs rather than a single URL (- for stdin)"
 	echo "  -c PATH 	User this file instead of the default file for cookies (i.e. ~/.rapidget)"
 	echo "  -u USER:PASS	Login using this data and save cookie to file"
 	echo "  -v		Print version"
@@ -58,6 +58,14 @@ login()
 	[ "${NUM}" -le 0 ] && error "Login incorrect"
 }
 
+dlfile()
+{
+	trap mkill INT TERM
+	ACTFILE=$(basename "${1}")
+	wget -O "${ACTFILE}" $@ --load-cookies="${COOKIEFILE}" "${1}" 
+
+}
+
 trap mkill INT TERM
 
 while getopts ":vhc:u:f" arg; do
@@ -81,10 +89,14 @@ if [ -z "${FILE}" ]; then
 	ACTFILE=$(basename "${URL}")
 	wget -O "${ACTFILE}" $@ --load-cookies="${COOKIEFILE}" "${URL}"
 else
-	cat "${URL}" | while read LINE; do
-		trap mkill INT TERM
-		ACTFILE=$(basename "${LINE}")
-		wget -O "${ACTFILE}" $@ --load-cookies="${COOKIEFILE}" "${LINE}" 
-	done
+	if [ "${URL}" = '-' ]; then
+		while read LINE; do
+			dlfile "${LINE}";
+		done
+	else
+		cat "${URL}" | while read LINE; do
+			dlfile "${LINE}"
+		done
+	fi
 fi
 cleanup
