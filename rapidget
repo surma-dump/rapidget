@@ -101,4 +101,5 @@ else
 		done
 	fi
 fi
+unset ACTFILE
 cleanup
