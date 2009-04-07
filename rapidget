@@ -83,8 +83,7 @@ while getopts ":vhc:u:f:d:" arg; do
 		?) usage 1 ;;
 	esac
 done
-shift $((${OPTIND} - 1))
-shift
+shift ${OPTIND}
 
 [ -n "${REAUTH}" ] && login
 if [ -n "${URL}" ]; then
