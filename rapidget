@@ -83,8 +83,7 @@ while getopts ":vhc:u:f:d:" arg; do
 		?) usage 1 ;;
 	esac
 done
-shift ${OPTIND}
-
+shift $((${OPTIND}-1))
 [ -n "${REAUTH}" ] && login
 if [ -n "${URL}" ]; then
 	ACTFILE=$(basename "${URL}")
