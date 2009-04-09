@@ -10,6 +10,7 @@ REAUTH=""
 FILE=""
 ACTFILE=""
 URL=""
+SKIP=""
 APPNAME=$(basename "${0}")
 VERSION=2.2
 
@@ -27,6 +28,7 @@ usage()
 	echo "  -d URL		Load a single URL"
 	echo "  -c PATH 	User this file instead of the default file for cookies (i.e. ~/.rapidget)"
 	echo "  -u USER:PASS	Login using this data and save cookie to file"
+	echo "  -s		Skip existing files"
 	echo "  -v		Print version"
 	echo "  -h		This message"
 	mkill $@
@@ -71,12 +73,13 @@ dlfile()
 
 trap mkill INT TERM
 
-while getopts ":vhc:u:f:d:" arg; do
+while getopts ":vshc:u:f:d:" arg; do
 	case "${arg}" in
 		f) FILE="${OPTARG}" ;;
 		d) URL="${OPTARG}" ;;
 		c) COOKIEFILE="${OPTARG}" ;;
 		u) DATA=($(echo ${OPTARG} | sed 's/:/ /')) ; REAUTH="y" ;;
+		s) SKIP="y"
 		v) version ; mkill 0 ;;
 		h) usage 0 ;;
 		:) error "${OPTARG} requires an argument" ;;
