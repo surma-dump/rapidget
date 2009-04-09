@@ -94,7 +94,7 @@ else
 			dlfile "${LINE}" $@
 		done
 	else
-		cat "${FILE}" | while read LINE; do
+		cat "${FILE}" | grep -Ev '^[[:space:]]*(#.*)?$' |  while read LINE; do
 			dlfile "${LINE}" $@
 		done
 	fi
