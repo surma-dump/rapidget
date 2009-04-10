@@ -4,8 +4,12 @@
 
 # Settings
 COOKIEFILE="${HOME}/.rapidget"
+DEFAULT_WGET="--progress=dot:mega"
 LOGINURL="https://ssl.rapidshare.com/cgi-bin/premiumzone.cgi"
+#
 
+
+REMOVE_PART=""
 REAUTH=""
 FILE=""
 ACTFILE=""
@@ -28,6 +32,7 @@ usage()
 	echo "  -d URL		Load a single URL"
 	echo "  -c PATH 	User this file instead of the default file for cookies (i.e. ~/.rapidget)"
 	echo "  -u USER:PASS	Login using this data and save cookie to file"
+	echo "  -r		Remove partially downloaded files"
 	echo "  -s		Skip existing files"
 	echo "  -v		Print version"
 	echo "  -h		This message"
@@ -36,7 +41,7 @@ usage()
 
 cleanup()
 {
-	[ -n "${ACTFILE}" ] && rm -rf "${ACTFILE}"
+	[ -n "${ACTFILE}" -a -n "${REMOVE_PART}" ] && rm -rf "${ACTFILE}"
 }
 
 mkill()
@@ -66,20 +71,22 @@ dlfile()
 	trap mkill INT TERM
 	ACTURL="${1}"
 	shift
-	ACTFILE=$(basename "${ACTURL}")
-	[ -z "${SKIP}" -o ! -e "${ACTFILE}" ] && wget -O "${ACTFILE}" $@ --load-cookies="${COOKIEFILE}" "${ACTURL}" || echo "Skippin ${ACTFILE}"
+	ACTFILE="${1}"
+	shift
+	wget ${DEFAULT_WGET} -O "${ACTFILE}" $@ --load-cookies="${COOKIEFILE}" "${ACTURL}" 
 
 }
 
 trap mkill INT TERM
 
-while getopts ":vshc:u:f:d:" arg; do
+while getopts ":vsrhc:u:f:d:" arg; do
 	case "${arg}" in
 		f) FILE="${OPTARG}" ;;
 		d) URL="${OPTARG}" ;;
 		c) COOKIEFILE="${OPTARG}" ;;
 		u) DATA=($(echo ${OPTARG} | sed 's/:/ /')) ; REAUTH="y" ;;
 		s) SKIP="y" ;;
+		r) REMOVE_PART="y" ;;
 		v) version ; mkill 0 ;;
 		h) usage 0 ;;
 		:) error "${OPTARG} requires an argument" ;;
@@ -87,18 +94,20 @@ while getopts ":vshc:u:f:d:" arg; do
 	esac
 done
 shift $((${OPTIND}-1))
+
 [ -n "${REAUTH}" ] && login
 if [ -n "${URL}" ]; then
 	ACTFILE=$(basename "${URL}")
-	wget -O "${ACTFILE}" $@ --load-cookies="${COOKIEFILE}" "${URL}"
+		dlfile "${URL}" "${ACTFILE}" $@
 else
 	if [ -z "${FILE}" ]; then
 		while read LINE; do
-			dlfile "${LINE}" $@
+			dlfile "${LINE}" "$(basename ${LINE})" $@
 		done
 	else
 		cat "${FILE}" | grep -Ev '^[[:space:]]*(#.*)?$' |  while read LINE; do
-			dlfile "${LINE}" $@
+			FILENAME=$(basename "${LINE}")
+			[ -z "${SKIP}" -o ! -e "${FILENAME}" ] && dlfile "${LINE}" "${FILENAME}" $@ || echo "Skipping ${FILENAME}"
 		done
 	fi
 fi
