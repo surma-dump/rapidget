@@ -4,8 +4,12 @@
 
 # Settings
 COOKIEFILE="${HOME}/.rapidget"
+DEFAULT_WGET="--progress=dot:mega"
 LOGINURL="https://ssl.rapidshare.com/cgi-bin/premiumzone.cgi"
+#
 
+
+REMOVE_PART=""
 REAUTH=""
 FILE=""
 ACTFILE=""
@@ -28,6 +32,7 @@ usage()
 	echo "  -d URL		Load a single URL"
 	echo "  -c PATH 	User this file instead of the default file for cookies (i.e. ~/.rapidget)"
 	echo "  -u USER:PASS	Login using this data and save cookie to file"
+	echo "  -r		Remove partially downloaded files"
 	echo "  -s		Skip existing files"
 	echo "  -v		Print version"
 	echo "  -h		This message"
@@ -36,7 +41,7 @@ usage()
 
 cleanup()
 {
-	[ -n "${ACTFILE}" ] && rm -rf "${ACTFILE}"
+	[ -n "${ACTFILE}" -a -n "${REMOVE_PART}" ] && rm -rf "${ACTFILE}"
 }
 
 mkill()
@@ -68,19 +73,20 @@ dlfile()
 	shift
 	ACTFILE="${1}"
 	shift
-	wget -O "${ACTFILE}" $@ --load-cookies="${COOKIEFILE}" "${ACTURL}" 
+	wget ${DEFAULT_WGET} -O "${ACTFILE}" $@ --load-cookies="${COOKIEFILE}" "${ACTURL}" 
 
 }
 
 trap mkill INT TERM
 
-while getopts ":vshc:u:f:d:" arg; do
+while getopts ":vsrhc:u:f:d:" arg; do
 	case "${arg}" in
 		f) FILE="${OPTARG}" ;;
 		d) URL="${OPTARG}" ;;
 		c) COOKIEFILE="${OPTARG}" ;;
 		u) DATA=($(echo ${OPTARG} | sed 's/:/ /')) ; REAUTH="y" ;;
 		s) SKIP="y" ;;
+		r) REMOVE_PART="y" ;;
 		v) version ; mkill 0 ;;
 		h) usage 0 ;;
 		:) error "${OPTARG} requires an argument" ;;
@@ -92,7 +98,7 @@ shift $((${OPTIND}-1))
 [ -n "${REAUTH}" ] && login
 if [ -n "${URL}" ]; then
 	ACTFILE=$(basename "${URL}")
-	wget -O "${ACTFILE}" $@ --load-cookies="${COOKIEFILE}" "${URL}"
+		dlfile "${URL}" "${ACTFILE}" $@
 else
 	if [ -z "${FILE}" ]; then
 		while read LINE; do
