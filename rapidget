@@ -66,8 +66,9 @@ dlfile()
 	trap mkill INT TERM
 	ACTURL="${1}"
 	shift
-	ACTFILE=$(basename "${ACTURL}")
-	[ -z "${SKIP}" -o ! -e "${ACTFILE}" ] && wget -O "${ACTFILE}" $@ --load-cookies="${COOKIEFILE}" "${ACTURL}" || echo "Skippin ${ACTFILE}"
+	ACTFILE="${1}"
+	shift
+	wget -O "${ACTFILE}" $@ --load-cookies="${COOKIEFILE}" "${ACTURL}" 
 
 }
 
@@ -87,6 +88,7 @@ while getopts ":vshc:u:f:d:" arg; do
 	esac
 done
 shift $((${OPTIND}-1))
+
 [ -n "${REAUTH}" ] && login
 if [ -n "${URL}" ]; then
 	ACTFILE=$(basename "${URL}")
@@ -94,11 +96,12 @@ if [ -n "${URL}" ]; then
 else
 	if [ -z "${FILE}" ]; then
 		while read LINE; do
-			dlfile "${LINE}" $@
+			dlfile "${LINE}" "$(basename ${LINE})" $@
 		done
 	else
 		cat "${FILE}" | grep -Ev '^[[:space:]]*(#.*)?$' |  while read LINE; do
-			dlfile "${LINE}" $@
+			FILENAME=$(basename "${LINE}")
+			[ -z "${SKIP}" -o ! -e "${FILENAME}" ] && dlfile "${LINE}" "${FILENAME}" $@ || echo "Skipping ${FILENAME}"
 		done
 	fi
 fi
