@@ -16,7 +16,7 @@ ACTFILE=""
 URL=""
 SKIP=""
 APPNAME=$(basename "${0}")
-VERSION=2.3
+VERSION=2.5
 
 version()
 {
