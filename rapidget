@@ -26,7 +26,7 @@ version()
 usage()
 {
 	version
-	echo " [OPTIONS] [wget OPTIONS]"
+	echo " [OPTIONS] -- [wget OPTIONS]"
 	echo "Options:"
 	echo "  -f FILE		Read URLS from FILE"
 	echo "  -d URL		Load a single URL"
