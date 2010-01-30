@@ -16,7 +16,7 @@ ACTFILE=""
 URL=""
 SKIP=""
 APPNAME=$(basename "${0}")
-VERSION=2.5
+VERSION=2.6
 
 version()
 {
@@ -26,7 +26,7 @@ version()
 usage()
 {
 	version
-	echo " [OPTIONS] [wget OPTIONS]"
+	echo " [OPTIONS] -- [wget OPTIONS]"
 	echo "Options:"
 	echo "  -f FILE		Read URLS from FILE"
 	echo "  -d URL		Load a single URL"
@@ -61,9 +61,9 @@ login()
 	echo "Logging in..."
 	NUM=$(wget -O - --post-data="login=${DATA[0]}&password=${DATA[1]}" \
 		--save-cookies="${COOKIEFILE}" "${LOGINURL}" 2>/dev/null  \
-		| grep -i 'Settings' \
+		| grep -i 'E#2' \
 		| wc -l)
-	[ "${NUM}" -le 0 ] && error "Login incorrect"
+	[ "${NUM}" -ge 1 ] && error "Login incorrect"
 }
 
 dlfile()
@@ -96,6 +96,8 @@ done
 shift $((${OPTIND}-1))
 
 [ -n "${REAUTH}" ] && login
+
+
 if [ -n "${URL}" ]; then
 	ACTFILE=$(basename "${URL}")
 		dlfile "${URL}" "${ACTFILE}" $@
